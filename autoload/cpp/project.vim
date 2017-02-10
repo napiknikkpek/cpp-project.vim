@@ -9,7 +9,7 @@ fu! s:normalize_command(dirname, command)
   return substitute(a:command, '\s\zs\a\+\S\+', a:dirname.'/\0', 'g')
 endfu
 
-fu! project#set(cc) abort
+fu! cpp#project#set(cc) abort
   let db = len(a:cc)!=0 ? json_decode(join(readfile(a:cc), '')) : []
 
   let s:all = deepcopy(s:all_tmpl)
@@ -25,10 +25,14 @@ fu! project#set(cc) abort
   let s:all.cc = a:cc
 endfu
 
-fu! project#update() abort
+fu! cpp#project#update() abort
   let cur = s:all.current
-  call project#set(s:all.cc)
-  call project#select(cur)
+  call cpp#project#set(s:all.cc)
+  call cpp#project#select(cur)
+endfu
+
+fu! cpp#project#info()
+  return s:all
 endfu
 
 fu! s:get_default_includes(cc)
@@ -50,7 +54,7 @@ fu! s:extract_include(out, command)
   endfor
 endfu
 
-fu! project#get_list()
+fu! cpp#project#get_list()
   return sort(keys(s:all.projects))
 endfu
 
@@ -58,7 +62,7 @@ fu! s:get_current()
   return get(s:all.projects, s:all.current, s:project_tmpl)
 endfu
 
-fu! project#generate_tags()
+fu! cpp#project#generate_tags()
   let cur = s:get_current()
   let files = []
   for x in values(cur.files)
@@ -74,7 +78,7 @@ fu! project#generate_tags()
   endif
 endfu
 
-fu! project#select(proj) abort 
+fu! cpp#project#select(proj) abort 
   let cur = get(s:all.projects, a:proj)
   if type(cur) == type(0)
     return
@@ -90,14 +94,14 @@ fu! project#select(proj) abort
   endfor
   let cur.path = join([&g:path] + keys(dict) + s:get_default_includes(cc), ',')
 
-  call project#generate_tags()
+  call cpp#project#generate_tags()
 
   let nr = bufnr('%')
   silent bufdo doautocmd FileType
   exe ':'.nr.'buffer'
 endfu
 
-fu! project#update_buffer() abort
+fu! cpp#project#update_buffer() abort
   let cur = s:get_current()
   let &l:makeprg = get(cur.files, expand('%:p'), '')
   let &l:path = cur.path
